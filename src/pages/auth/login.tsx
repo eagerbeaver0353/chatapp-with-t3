@@ -16,8 +16,11 @@ import { useRouter } from "next/router";
 import Header from "../../components/_general/Header";
 import { api } from "../../utils/api";
 import Image from "next/image";
+import { GetStaticProps, NextPage } from "next";
+import { SessionProviderProps, getProviders, signIn } from "next-auth/react";
+import { Provider } from "next-auth/providers";
 
-const LogInPage = () => {
+const LogInPage: NextPage<{ providers: Provider[] }> = ({ providers }) => {
   const { register, handleSubmit } = useForm<LoginData>();
   const { success, error } = useToast();
   const navigate = useRouter();
@@ -75,6 +78,16 @@ const LogInPage = () => {
             </div>
 
             <Button type="submit">Log In</Button>
+            {"Or"}
+            {Object.values(providers).map((provider) => {
+              return (
+                <Button type="button"
+                  onClick={() => signIn(provider.id, { callbackUrl: "/conversations" })}
+                >
+                  Sign in with {provider.name}
+                </Button>
+              );
+            })}
 
             <div className={styles.login__link}>
               <span>Need an account?</span>
@@ -92,3 +105,13 @@ const LogInPage = () => {
 };
 
 export default LogInPage;
+
+export const getStaticProps: GetStaticProps<{
+  providers: SessionProviderProps[];
+}> = async () => {
+  return {
+    props: {
+      providers: ((await getProviders()) as unknown) as SessionProviderProps[],
+    },
+  };
+};
